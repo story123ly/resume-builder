@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能简历生成器 - AI简历优化与生成</title>
+<style>
+:root {
+  --primary: #1a1a2e;
+  --primary-light: #16213e;
+  --accent: #0f3460;
+  --gold: #c9a84c;
+  --gold-light: #e0c97f;
+  --text: #2c3e50;
+  --text-light: #5a6d7e;
+  --bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --border: #e8ecf1;
+  --success: #27ae60;
+  --danger: #e74c3c;
+  --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  background: var(--primary);
+  color: #fff;
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.header .logo {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.header .logo span { color: var(--gold); }
+.header .nav a {
+  color: #b0bec5;
+  text-decoration: none;
+  margin-left: 24px;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+.header .nav a:hover, .header .nav a.active { color: var(--gold); }
+
+/* Container */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 22px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+/* Upload Zone */
+.upload-zone {
+  border: 2px dashed #c0c8d0;
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafbfc;
+}
+.upload-zone:hover { border-color: var(--accent); background: #f0f4f8; }
+.upload-zone.dragover { border-color: var(--gold); background: #fdf9f0; }
+.upload-zone .upload-icon { font-size: 40px; margin-bottom: 12px; color: var(--accent); }
+.upload-zone .upload-text { font-size: 15px; color: var(--text-light); }
+.upload-zone .upload-hint { font-size: 12px; color: #a0aab4; margin-top: 8px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #0d2b4e; }
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #1a1a2e;
+}
+.btn-gold:hover { filter: brightness(1.05); }
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+}
+.btn-outline:hover { background: var(--accent); color: #fff; }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-block { width: 100%; }
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+.tab {
+  flex: 1;
+  padding: 12px 20px;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+.tab:hover:not(.active) { background: #f0f2f5; }
+
+/* Analysis Cards */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.dim-card {
+  background: #f8f9fb;
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.dim-card .dim-score {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+.dim-card .dim-label {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 6px;
+  font-weight: 600;
+}
+.dim-card .dim-comment {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.score-big {
+  text-align: center;
+  padding: 16px;
+}
+.score-number {
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+}
+.score-label { font-size: 14px; color: var(--text-light); margin-top: 4px; }
+
+/* Resume Preview */
+.resume-preview {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin-top: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  box-shadow: inset 0 0 0 1px #f0f0f0;
+}
+
+/* Changes List */
+.changes-list {
+  list-style: none;
+  margin-top: 12px;
+}
+.changes-list li {
+  padding: 8px 12px;
+  background: #f0faf4;
+  border-left: 3px solid var(--success);
+  margin-bottom: 6px;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+}
+.keyword-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #eef2ff;
+  color: var(--accent);
+  border-radius: 20px;
+  font-size: 12px;
+  margin: 3px 4px;
+  font-weight: 500;
+}
+
+/* Status */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--accent);
+  font-size: 14px;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { padding: 12px 16px; background: #fef2f2; color: var(--danger); border-radius: 8px; font-size: 13px; margin: 12px 0; }
+
+/* Register Banner */
+.register-banner {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.register-banner h3 { font-size: 17px; margin-bottom: 4px; }
+.register-banner p { font-size: 13px; opacity: 0.8; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: #a0aab4;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* Helpers */
+.hidden { display: none !important; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mt-20 { margin-top: 20px; }
+.mb-16 { margin-bottom: 16px; }
+.text-center { text-align: center; }
+.gap-12 { gap: 12px; display: flex; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .analysis-grid { grid-template-columns: repeat(2, 1fr); }
+  .header { padding: 0 16px; }
+  .container { padding: 20px 12px; }
+  .register-banner { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Resume<span>AI</span></div>
+  <nav class="nav">
+    <a href="#" class="active" onclick="switchTab('upload')">简历优化</a>
+    <a href="#" onclick="switchTab('generate')">一键生成</a>
+  </nav>
+</header>
+
+<div class="container" id="app">
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="upload" onclick="switchTab('upload')">
+      上传简历优化
+    </div>
+    <div class="tab" data-tab="generate" onclick="switchTab('generate')">
+      AI 一键生成
+    </div>
+  </div>
+
+  <!-- ====== 上传优化 Tab ====== -->
+  <div id="tab-upload">
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="section-title">上传简历</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">点击上传或拖拽文件到此处</div>
+        <div class="upload-hint">支持 PDF / Word / TXT 格式</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.md" style="display:none" onchange="handleFileSelect(event)">
+      <div id="uploadStatus" class="mt-12"></div>
+    </div>
+
+    <!-- Actions -->
+    <div id="actionsCard" class="card hidden">
+      <div class="section-title">选择操作</div>
+      <div class="gap-12">
+        <button class="btn btn-primary" onclick="doAnalyze()">AI 简历评分</button>
+        <button class="btn btn-gold" onclick="doOptimize()">AI 智能优化</button>
+        <button class="btn btn-outline" onclick="resetUpload()">重新上传</button>
+      </div>
+      <div class="form-group mt-16 hidden" id="targetPositionGroup">
+        <label>目标岗位（选填，优化时更有针对性）</label>
+        <input type="text" id="targetPosition" placeholder="如：高级前端工程师">
+      </div>
+    </div>
+
+    <!-- Analysis Result -->
+    <div id="analysisCard" class="card hidden">
+      <div class="section-title">简历评分报告</div>
+      <div id="analysisContent"></div>
+    </div>
+
+    <!-- Optimize Result -->
+    <div id="optimizeCard" class="card hidden">
+      <div class="section-title">AI 优化结果</div>
+      <div id="optimizeContent"></div>
+    </div>
+
+    <!-- Register Banner -->
+    <div id="registerBanner" class="register-banner hidden">
+      <div>
+        <h3>注册解锁全部功能</h3>
+        <p>免费注册即可永久使用简历评分 + AI优化 + 模板导出</p>
+      </div>
+      <button class="btn btn-gold" onclick="showRegister()">免费注册</button>
+    </div>
+
+  </div>
+
+  <!-- ====== 一键生成 Tab ====== -->
+  <div id="tab-generate" class="hidden">
+
+    <div class="card">
+      <div class="section-title">填写基本信息，AI 自动生成简历</div>
+      <div class="form-group">
+        <label>姓名 *</label>
+        <input type="text" id="genName" placeholder="你的姓名">
+      </div>
+      <div class="form-group">
+        <label>求职意向 *</label>
+        <input type="text" id="genTargetPosition" placeholder="如：产品经理">
+      </div>
+      <div class="form-group">
+        <label>工作经历</label>
+        <textarea id="genExperience" placeholder="公司名 | 职位 | 起止时间 | 工作描述，每段一行"></textarea>
+      </div>
+      <div class="form-group">
+        <label>教育背景</label>
+        <textarea id="genEducation" placeholder="学校 | 专业 | 学历 | 起止时间"></textarea>
+      </div>
+      <div class="form-group">
+        <label>技能</label>
+        <textarea id="genSkills" placeholder="Python, React, 数据分析... 逗号分隔"></textarea>
+      </div>
+      <div class="form-group">
+        <label>项目经验</label>
+        <textarea id="genProjects" placeholder="项目名称 | 职责 | 成果，每段一行"></textarea>
+      </div>
+      <div class="form-group">
+        <label>其他补充</label>
+        <textarea id="genOthers" placeholder="证书、语言能力、获奖经历等"></textarea>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="doGenerate()">AI 一键生成简历</button>
+    </div>
+
+    <!-- Generate Result -->
+    <div id="generateCard" class="card hidden">
+      <div class="section-title">生成的简历</div>
+      <div id="generateContent"></div>
+    </div>
+
+    <div class="register-banner">
+      <div>
+        <h3>注册解锁全部功能</h3>
+        <p>免费注册即可永久使用简历评分 + AI优化 + 模板导出</p>
+      </div>
+      <button class="btn btn-gold" onclick="showRegister()">免费注册</button>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    ResumeAI © 2026 — 智能简历生成与优化工具
+  </footer>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000/api/resume';
+let currentResumeId = '';
+let currentTab = 'upload';
+
+// Tab switching
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('tab-upload').classList.toggle('hidden', tab !== 'upload');
+  document.getElementById('tab-generate').classList.toggle('hidden', tab !== 'generate');
+  document.querySelectorAll('.header .nav a').forEach((a, i) => {
+    a.classList.toggle('active', (i === 0 && tab === 'upload') || (i === 1 && tab === 'generate'));
+  });
+}
+
+// File upload
+const uploadZone = document.getElementById('uploadZone');
+['dragenter', 'dragover'].forEach(ev => uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); }));
+['dragleave', 'drop'].forEach(ev => uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); }));
+uploadZone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file) uploadFile(file);
+});
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) uploadFile(file);
+}
+
+async function uploadFile(file) {
+  document.getElementById('uploadStatus').innerHTML = '<div class="loading"><div class="spinner"></div>正在解析简历...</div>';
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const resp = await fetch(API_BASE + '/upload', { method: 'POST', body: form });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.detail);
+    currentResumeId = data.resume_id;
+    document.getElementById('uploadStatus').innerHTML = `<div style="color:var(--success);font-size:14px;">已解析「${data.file_name}」，共 ${data.text_length} 字</div>`;
+    document.getElementById('actionsCard').classList.remove('hidden');
+    document.getElementById('analysisCard').classList.add('hidden');
+    document.getElementById('optimizeCard').classList.add('hidden');
+  } catch(e) {
+    document.getElementById('uploadStatus').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+function resetUpload() {
+  currentResumeId = '';
+  document.getElementById('uploadStatus').innerHTML = '';
+  document.getElementById('actionsCard').classList.add('hidden');
+  document.getElementById('analysisCard').classList.add('hidden');
+  document.getElementById('optimizeCard').classList.add('hidden');
+  document.getElementById('fileInput').value = '';
+}
+
+// Analyze
+async function doAnalyze() {
+  if (!currentResumeId) return;
+  const card = document.getElementById('analysisCard');
+  card.classList.remove('hidden');
+  document.getElementById('analysisContent').innerHTML = '<div class="loading"><div class="spinner"></div>AI正在评分...</div>';
+  try {
+    const resp = await fetch(API_BASE + '/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ resume_id: currentResumeId })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.detail);
+
+    const dims = data.dimensions || {};
+    const dimOrder = [
+      {key: 'content', label: '内容质量'},
+      {key: 'structure', label: '结构清晰'},
+      {key: 'keywords', label: '关键词匹配'},
+      {key: 'formatting', label: '格式排版'},
+    ];
+
+    let html = '<div class="score-big"><div class="score-number">' + (data.overall_score || '--') + '</div><div class="score-label">综合评分 / 10</div></div>';
+    html += '<div class="analysis-grid">';
+    dimOrder.forEach(d => {
+      const v = dims[d.key] || {};
+      html += `<div class="dim-card">
+        <div class="dim-score">${v.score || '--'}</div>
+        <div class="dim-label">${d.label}</div>
+        <div class="dim-comment">${v.comment || ''}</div>
+      </div>`;
+    });
+    html += '</div>';
+    if (data.summary) html += `<p style="font-size:14px;color:var(--text-light);padding:12px;background:#f8f9fb;border-radius:8px;">${data.summary}</p>`;
+    document.getElementById('analysisContent').innerHTML = html;
+    document.getElementById('registerBanner').classList.remove('hidden');
+  } catch(e) {
+    document.getElementById('analysisContent').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+// Optimize
+async function doOptimize() {
+  if (!currentResumeId) return;
+  document.getElementById('targetPositionGroup').classList.remove('hidden');
+  // slight delay to show the position input
+
+  const targetPos = document.getElementById('targetPosition').value.trim();
+  const card = document.getElementById('optimizeCard');
+  card.classList.remove('hidden');
+  document.getElementById('optimizeContent').innerHTML = '<div class="loading"><div class="spinner"></div>AI正在优化简历...</div>';
+  try {
+    const resp = await fetch(API_BASE + '/optimize', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ resume_id: currentResumeId, target_position: targetPos })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.detail);
+
+    let html = '';
+    if (data.optimized_resume) {
+      html += '<div class="section-title" style="font-size:16px;">优化后简历</div>';
+      html += '<div class="resume-preview">' + data.optimized_resume + '</div>';
+    }
+    if (data.changes && data.changes.length) {
+      html += '<div class="section-title mt-20" style="font-size:16px;">主要修改</div>';
+      html += '<ul class="changes-list">';
+      data.changes.forEach(c => { html += `<li>${c}</li>`; });
+      html += '</ul>';
+    }
+    if (data.keywords_added && data.keywords_added.length) {
+      html += '<div class="section-title mt-20" style="font-size:16px;">新增关键词</div>';
+      html += '<div>';
+      data.keywords_added.forEach(k => { html += `<span class="keyword-tag">${k}</span>`; });
+      html += '</div>';
+    }
+    document.getElementById('optimizeContent').innerHTML = html;
+    document.getElementById('registerBanner').classList.remove('hidden');
+  } catch(e) {
+    document.getElementById('optimizeContent').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+// Generate
+async function doGenerate() {
+  const name = document.getElementById('genName').value.trim();
+  if (!name) return alert('请填写姓名');
+
+  document.getElementById('generateCard').classList.remove('hidden');
+  document.getElementById('generateContent').innerHTML = '<div class="loading"><div class="spinner"></div>AI正在生成简历...</div>';
+
+  const payload = {
+    name,
+    target_position: document.getElementById('genTargetPosition').value.trim(),
+    experience: document.getElementById('genExperience').value.trim(),
+    education: document.getElementById('genEducation').value.trim(),
+    skills: document.getElementById('genSkills').value.trim(),
+    projects: document.getElementById('genProjects').value.trim(),
+    others: document.getElementById('genOthers').value.trim(),
+  };
+
+  try {
+    const resp = await fetch(API_BASE + '/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.detail);
+
+    let html = '';
+    if (data.resume) {
+      html += '<div class="resume-preview">' + data.resume + '</div>';
+    }
+    if (data.suggestions && data.suggestions.length) {
+      html += '<div class="section-title mt-20" style="font-size:16px;">优化建议</div>';
+      html += '<ul class="changes-list">';
+      data.suggestions.forEach(s => { html += `<li>${s}</li>`; });
+      html += '</ul>';
+    }
+    document.getElementById('generateContent').innerHTML = html;
+  } catch(e) {
+    document.getElementById('generateContent').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+// Register (placeholder)
+function showRegister() {
+  alert('注册功能将在下一版上线。目前所有功能均可免费使用！');
+}
+</script>
+</body>
+</html>
